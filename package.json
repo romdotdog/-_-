@@ -1,0 +1,24 @@
+{
+	"name": "-_-",
+	"version": "1.0.0",
+	"description": "A small language example made from https://github.com/romdotdog/q",
+	"directories": {
+		"test": "tests"
+	},
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/romdotdog/-_-.git"
+	},
+	"author": "romdotdog",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/romdotdog/-_-/issues"
+	},
+	"homepage": "https://github.com/romdotdog/-_-#readme",
+	"dependencies": {
+		"typescript": "^4.1.5"
+	}
+}
