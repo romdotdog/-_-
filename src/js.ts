@@ -2,29 +2,24 @@ import Block, { GenericSyntax, SerializedGenericSyntax } from "q";
 import { lexer, parser } from "./parser";
 import { binaryOperators, unaryOperators } from "./ops";
 
-const makeSyntax = (source: string): GenericSyntax => ({
-	source: [
-		{
-			type: "JS",
-			source: [source],
-			debugInfo: [0, 0]
-		}
-	],
-	groups: []
-});
+const constants = {
+	half: ".5",
+	pi: "Math.pi",
+	tau: "Math.pi*2"
+};
 
+let fIndex = 0;
+let currentFunction = () => `f${fIndex}`;
 let opFuncs: Record<string, Function> = {};
 export default <Block>{
 	lex: lexer,
 	parse: parser,
 	gen: {
 		syntaxes: {
-			root: {
+			expression: {
 				visit: (syntax) => {
-					console.log(syntax);
 					while (syntax.groups.length != 1) {
 						const opGroup = syntax.groups[1];
-						console.log(opGroup);
 						if (opGroup?.type === "binaryOperator") {
 							const opTok = opGroup.source[0];
 							const op = binaryOperators.find((f) => f.name == opTok.type);
