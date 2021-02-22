@@ -44,6 +44,7 @@ export const lexer: Lexer = {
 		x100: "‰",
 
 		range: "Σ",
+		flatten: "Ξ",
 
 		// Other
 		swap: "¬"
@@ -52,15 +53,12 @@ export const lexer: Lexer = {
 };
 
 export const parser: Parser = {
-	root: q`expression`,
+	root: q`primaryExpression -> (unaryOperator | binaryOperator -> primaryExpression)*`,
 	ast: {
-		expression: q`primaryExpression -> (operation)?`,
-		operation: q`unaryOperator -> operation | binaryOperator -> (operation | primaryExpression)`,
-
 		binaryOperator: q`(add | sub | mul | div | pow | bsl | bsr | band | bor) -> (swap)?`,
 		primaryExpression: q`parenExpr | half | recurse | number | string | char`,
 
 		parenExpr: q`openingParenthesis -> <expression> -> closingParenthesis`,
-		unaryOperator: q`square | cube | pow10n | factorial | x10 | x100 | range`
+		unaryOperator: q`square | cube | pow10n | factorial | x10 | x100 | range | flatten`
 	}
 };
