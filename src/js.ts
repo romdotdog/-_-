@@ -11,12 +11,16 @@ export default <Block>{
 		syntaxes: {
 			root: {
 				serialize: (syntax: SerializedGenericSyntax) => {
-					syntax.groups.unshift(
+					syntax.groups = [
 						Object.values(opFuncs)
 							.map((f) => f.toString())
 							.join("\n\n") + "\n\n",
-						prepend
-					);
+
+						"console.log(",
+						prepend,
+						...syntax.groups,
+						")"
+					];
 				}
 			},
 			unaryOperator: {
