@@ -27,12 +27,13 @@ export const lexer: Lexer = {
 		mul: "*",
 		div: "/",
 
-		pow: "^",
+		pow: "•",
 
 		bsl: "«", // shift left
 		bsr: "»", // shift right
 		band: "‡", // bitwise and
 		bor: "†", // bitwise or
+		bxor: "^", // bitwise or
 
 		// Unary
 		square: "²",

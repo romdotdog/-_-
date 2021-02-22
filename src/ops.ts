@@ -32,5 +32,14 @@ function makeBinaryOperator(name: string, algorithm: string): Function {
 }
 
 export const binaryOperators = [
-	makeBinaryOperator("add", "a + b")
+	makeBinaryOperator("add", "a + b"),
+	makeBinaryOperator("sub", "a - b"),
+	makeBinaryOperator("mul", "a * b"),
+	makeBinaryOperator("div", "a / b"),
+	makeBinaryOperator("pow", "Math.pow(a, b)"),
+	makeBinaryOperator("bsl", "a << b"),
+	makeBinaryOperator("bsr", "a >> b"),
+	makeBinaryOperator("band", "a & b"),
+	makeBinaryOperator("bor", "a | b"),
+	makeBinaryOperator("bxor", "a ^ b")
 ] as Function[];
