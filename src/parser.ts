@@ -49,7 +49,8 @@ const unaryOperators = {
 	add: "+",
 	g: ">",
 	l: "<",
-	sign: "±"
+	sign: "±",
+	testExistence: "?"
 };
 
 const constants = {
