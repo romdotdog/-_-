@@ -1,20 +1,15 @@
 import { Lexer, Parser, q } from "q";
 
-// Function declarations
-// Ώ lhs: ω rhs: Ω
-// Ύ lhs: υ rhs: Υ
-// Ί lhs: ι rhs: Ι
-// Ή lhs: η rhs: Η
-// Έ lhs: ε rhs: Ε
-// Ό lhs: ο rhs: Ο
-
-export const fdecs: [string, [string, string, string]][] = Object.entries({
-	omega: ["Ώ", "ω", "Ω"],
-	upsilon: ["Ύ", "υ", "Υ"],
-	iota: ["Ί", "ι", "Ι"],
-	eta: ["Ή", "η", "Η"],
-	epsilon: ["Έ", "ε", "Ε"],
-	omicron: ["Ό", "ο", "Ο"]
+export const fdecs: [
+	string,
+	[marker: string, recurse: string, lhs: string, rhs: string]
+][] = Object.entries({
+	omega: ["Ω", "Ώ", "ω", "ώ"],
+	upsilon: ["Υ", "Ύ", "υ", "ύ"],
+	iota: ["Ι", "Ί", "ι", "ί"],
+	eta: ["Η", "Ή", "η", "ή"],
+	epsilon: ["Ε", "Έ", "ε", "έ"],
+	omicron: ["Ο", "Ό", "ο", "ό"]
 });
 
 const binaryOperators = {
@@ -53,12 +48,6 @@ const constants = {
 	tau: "τ"
 };
 
-const recursion = {
-	recurseDepth1: "ς",
-	recurseDepth2: "ζ",
-	recurseDepth3: "ξ"
-};
-
 // ext: .-_-
 // codepage: cp1253 (https://en.wikipedia.org/wiki/Windows-1253)
 export const lexer: Lexer = {
@@ -77,8 +66,6 @@ export const lexer: Lexer = {
 
 		...unaryOperators,
 
-		...recursion,
-
 		...constants,
 
 		// Other
@@ -90,15 +77,21 @@ export const lexer: Lexer = {
 			return acc;
 		}, {} as Record<string, string>),
 
+		// Recursion
+		...fdecs.reduce((acc, x) => {
+			acc["recurse" + x[0]] = x[1][1];
+			return acc;
+		}, {} as Record<string, string>),
+
 		// Lhs
 		...fdecs.reduce((acc, x) => {
-			acc["lhs" + x[0]] = x[1][1];
+			acc["lhs" + x[0]] = x[1][2];
 			return acc;
 		}, {} as Record<string, string>),
 
 		// Rhs
 		...fdecs.reduce((acc, x) => {
-			acc["rhs" + x[0]] = x[1][2];
+			acc["rhs" + x[0]] = x[1][3];
 			return acc;
 		}, {} as Record<string, string>)
 	},
@@ -129,6 +122,8 @@ export const parser: Parser = {
 			.map((f) => `<decl${f[0]}> -> <expression> -> (decl${f[0]})?`)
 			.join(" | ")}`,
 
-		recursion: q`(${joinObjectOr(recursion)}) -> (primaryExpression)?`
+		recursion: q`(${fdecs
+			.map((f) => "recurse" + f[0])
+			.join(" | ")}) -> (primaryExpression)?`
 	}
 };

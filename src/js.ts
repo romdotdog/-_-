@@ -10,12 +10,6 @@ const constants = {
 
 let currentFunction = ["main"]; // Scope order
 
-const recursionTypeToDepth = {
-	recurseDepth1: 0,
-	recurseDepth2: 1,
-	recurseDepth3: 2
-} as Record<string, number>;
-
 let opFuncs: Record<string, Function> = {};
 export default <Block>{
 	lex: lexer,
@@ -156,26 +150,22 @@ export default <Block>{
 				serialize: (syntax) => {
 					const [lhs, rhs] = syntax.groups;
 
-					const depth = recursionTypeToDepth[syntax.source[0].type];
-					if (depth === undefined)
+					const fn = fdecs.find((f) => f[1][1] === syntax.source[0].type);
+					if (fn === undefined)
 						throw new Error("Recursion depth not recognized.");
 
-					const fn =
-						currentFunction[Math.max(currentFunction.length - 1 - depth, 0)];
-					return `${fn}(${lhs}, ${rhs})`;
+					return `${fn[1][0]}(${lhs}, ${rhs})`;
 				}
 			},
 			recursionUnaryOperation: {
 				serialize: (syntax) => {
 					const [lhs] = syntax.groups;
 
-					const depth = recursionTypeToDepth[syntax.source[0].type];
-					if (depth === undefined)
+					const fn = fdecs.find((f) => f[1][1] === syntax.source[0].type);
+					if (fn === undefined)
 						throw new Error("Recursion depth not recognized.");
 
-					const fn =
-						currentFunction[Math.max(currentFunction.length - 1 - depth, 0)];
-					return `${fn}(${lhs})`;
+					return `${fn[1][0]}(${lhs})`;
 				}
 			},
 			customBinaryOperation: {
