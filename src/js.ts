@@ -216,7 +216,7 @@ export default <Block>{
 			generatedIfExpr: {
 				serialize: (syntax) => {
 					const [condition, trueSide, falseSide] = syntax.groups;
-					return `${condition} ? ${trueSide} : ${falseSide}`;
+					return `${condition} === 1 ? ${trueSide} : ${falseSide}`;
 				}
 			}
 		},
