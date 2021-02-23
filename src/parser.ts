@@ -1,5 +1,22 @@
 import { Lexer, Parser, q } from "q";
 
+// Function declarations
+// Ώ lhs: ω rhs: Ω
+// Ύ lhs: υ rhs: Υ
+// Ί lhs: ι rhs: Ι
+// Ή lhs: η rhs: Η
+// Έ lhs: ε rhs: Ε
+// Ό lhs: ο rhs: Ο
+
+export const fdecs: [string, [string, string, string]][] = Object.entries({
+	omega: ["Ώ", "ω", "Ω"],
+	upsilon: ["Ύ", "υ", "Υ"],
+	iota: ["Ί", "ι", "Ι"],
+	eta: ["Ή", "η", "Η"],
+	epsilon: ["Έ", "ε", "Ε"],
+	omicron: ["Ό", "ο", "Ο"]
+});
+
 const binaryOperators = {
 	add: "+",
 	sub: "-",
@@ -33,8 +50,14 @@ const unaryOperators = {
 const constants = {
 	half: "½",
 	pi: "π",
-	tau: "τ",
-	recurse: "ƒ"
+	tau: "τ"
+};
+
+const recursion = {
+	recurseDepth1: "ƒ",
+	recurseDepth2: "ς",
+	recurseDepth3: "ζ",
+	recurseDepth4: "ξ"
 };
 
 // ext: .-_-
@@ -55,24 +78,56 @@ export const lexer: Lexer = {
 
 		...unaryOperators,
 
+		...recursion,
+
 		...constants,
 
 		// Other
-		swap: "¬"
+		swap: "¬",
+
+		// Function declarations
+		...fdecs.reduce((acc, x) => {
+			acc["decl" + x[0]] = x[1][0];
+			return acc;
+		}, {} as Record<string, string>),
+
+		// Lhs
+		...fdecs.reduce((acc, x) => {
+			acc["lhs" + x[0]] = x[1][1];
+			return acc;
+		}, {} as Record<string, string>),
+
+		// Rhs
+		...fdecs.reduce((acc, x) => {
+			acc["rhs" + x[0]] = x[1][2];
+			return acc;
+		}, {} as Record<string, string>)
 	},
 	throw: "Unexpected token -_-"
 };
 
+const joinObjectOr = (n: object) => Object.keys(n).join(" | ");
+
 export const parser: Parser = {
 	root: q`expression`,
 	ast: {
-		expression: q`primaryExpression -> (unaryOperator | binaryOperator -> primaryExpression)*`,
-		binaryOperator: q`(${Object.keys(binaryOperators).join(" | ")}) -> (swap)?`,
-		primaryExpression: q`parenExpr | ${Object.keys(constants).join(
-			" | "
-		)} | number | string | char`,
+		expression: q`primaryExpression -> (binaryOperator -> primaryExpression | unaryOperator | function -> (primaryExpression)?)*`,
+		binaryOperator: q`(${joinObjectOr(binaryOperators)}) -> (swap)?`,
+		primaryExpression: q`parenExpr | constant | literal`,
+
+		constant: q`${joinObjectOr(constants)}`,
+		literal: q`number | string | char`,
+
+		functionparam: q`${fdecs
+			.map((f) => ["lhs" + f[0], "rhs" + f[0]])
+			.flat()
+			.join(" | ")}`,
 
 		parenExpr: q`openingParenthesis -> <expression> -> closingParenthesis`,
-		unaryOperator: q`${Object.keys(unaryOperators).join(" | ")}`
+		unaryOperator: q`${joinObjectOr(unaryOperators)}`,
+
+		function: q`${fdecs
+			.map((f) => `<decl${f[0]}> -> <expression> -> (decl${f[0]})?`)
+			.join(" | ")}`
 	}
 };
