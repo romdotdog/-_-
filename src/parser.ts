@@ -54,10 +54,9 @@ const constants = {
 };
 
 const recursion = {
-	recurseDepth1: "ƒ",
-	recurseDepth2: "ς",
-	recurseDepth3: "ζ",
-	recurseDepth4: "ξ"
+	recurseDepth1: "ς",
+	recurseDepth2: "ζ",
+	recurseDepth3: "ξ"
 };
 
 // ext: .-_-
@@ -111,14 +110,14 @@ const joinObjectOr = (n: object) => Object.keys(n).join(" | ");
 export const parser: Parser = {
 	root: q`expression`,
 	ast: {
-		expression: q`primaryExpression -> (binaryOperator -> primaryExpression | unaryOperator | function -> (primaryExpression)?)*`,
+		expression: q`primaryExpression -> (binaryOperator -> primaryExpression | unaryOperator | recursion | function -> (primaryExpression)?)*`,
 		binaryOperator: q`(${joinObjectOr(binaryOperators)}) -> (swap)?`,
-		primaryExpression: q`parenExpr | constant | literal`,
+		primaryExpression: q`parenExpr | functionParam | constant | literal`,
 
 		constant: q`${joinObjectOr(constants)}`,
 		literal: q`number | string | char`,
 
-		functionparam: q`${fdecs
+		functionParam: q`${fdecs
 			.map((f) => ["lhs" + f[0], "rhs" + f[0]])
 			.flat()
 			.join(" | ")}`,
@@ -128,6 +127,8 @@ export const parser: Parser = {
 
 		function: q`${fdecs
 			.map((f) => `<decl${f[0]}> -> <expression> -> (decl${f[0]})?`)
-			.join(" | ")}`
+			.join(" | ")}`,
+
+		recursion: q`(${joinObjectOr(recursion)}) -> (primaryExpression)?`
 	}
 };

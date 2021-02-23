@@ -10,6 +10,12 @@ const constants = {
 
 let currentFunction = ["main"]; // Scope order
 
+const recursionTypeToDepth = {
+	recurseDepth1: 0,
+	recurseDepth2: 1,
+	recurseDepth3: 2
+} as Record<string, number>;
+
 let opFuncs: Record<string, Function> = {};
 export default <Block>{
 	lex: lexer,
@@ -19,19 +25,20 @@ export default <Block>{
 			expression: {
 				visit: (syntax) => {
 					while (syntax.groups.length != 1) {
-						const opGroup = syntax.groups[1];
+						const opSyntax = syntax.groups[1];
+						console.log(opSyntax);
 
 						// TODO: switch statement
-						if (opGroup?.type === "binaryOperator") {
-							const opTok = opGroup.source[0];
+						if (opSyntax?.type === "binaryOperator") {
+							const opTok = opSyntax.source[0];
 							const op = binaryOperators.find((f) => f.name == opTok.type);
 							if (!op)
 								throw new Error(`Operator ${opTok.type} not implemented.`);
 
 							opFuncs[opTok.type] = op;
 
-							let [lhs, _opGroup, rhs] = syntax.groups.splice(0, 3);
-							if (opGroup.source?.[1]?.type === "swap") {
+							let [lhs, _opSyntax, rhs] = syntax.groups.splice(0, 3);
+							if (opSyntax.source?.[1]?.type === "swap") {
 								[lhs, rhs] = [rhs, lhs];
 							}
 
@@ -46,15 +53,15 @@ export default <Block>{
 									}
 								]
 							});
-						} else if (opGroup?.type === "unaryOperator") {
-							const opTok = opGroup.source[0];
+						} else if (opSyntax?.type === "unaryOperator") {
+							const opTok = opSyntax.source[0];
 							const op = unaryOperators.find((f) => f.name == opTok.type);
 							if (!op)
 								throw new Error(`Operator ${opTok.type} not implemented.`);
 
 							opFuncs[opTok.type] = op;
 
-							let [lhs, _opGroup] = syntax.groups.splice(0, 2);
+							let [lhs, _opSyntax] = syntax.groups.splice(0, 2);
 
 							syntax.groups.unshift({
 								type: "unaryOperation",
@@ -67,9 +74,9 @@ export default <Block>{
 									}
 								]
 							});
-						} else if (opGroup?.type === "function") {
-							let [lhs, _opGroup, rhs] = syntax.groups.splice(0, 3);
-							const [fName, functionExpr] = opGroup.groups;
+						} else if (opSyntax?.type === "function") {
+							let [lhs, _opSyntax, rhs] = syntax.groups.splice(0, 3);
+							const [fName, functionExpr] = opSyntax.groups;
 
 							if (rhs?.type === "primaryExpression") {
 								// Binary
@@ -89,6 +96,33 @@ export default <Block>{
 									...(rhs ? [rhs] : [])
 								);
 							}
+						} else if (opSyntax?.type === "recursion") {
+							let [lhs, _opSyntax, rhs] = syntax.groups.splice(0, 3);
+							const [recursionTok] = opSyntax.source;
+
+							console.log([opSyntax, opSyntax.groups, opSyntax.source]);
+							if (rhs?.type === "primaryExpression") {
+								// Binary
+								syntax.groups.unshift({
+									type: "recursionBinaryOperation",
+									groups: [lhs, rhs],
+									source: [recursionTok]
+								});
+							} else {
+								// Unary
+								syntax.groups.unshift(
+									{
+										type: "recursionUnaryOperation",
+										groups: [lhs],
+										source: [recursionTok]
+									},
+									...(rhs ? [rhs] : [])
+								);
+							}
+						} else {
+							throw new Error(
+								`Couldn't generate code for operator with type \`${opSyntax?.type}\``
+							);
 						}
 					}
 				}
@@ -116,6 +150,32 @@ export default <Block>{
 				serialize: (syntax) => {
 					const [lhs] = syntax.groups;
 					return `${syntax.source[0].source[0]}(${lhs})`;
+				}
+			},
+			recursionBinaryOperation: {
+				serialize: (syntax) => {
+					const [lhs, rhs] = syntax.groups;
+
+					const depth = recursionTypeToDepth[syntax.source[0].type];
+					if (depth === undefined)
+						throw new Error("Recursion depth not recognized.");
+
+					const fn =
+						currentFunction[Math.max(currentFunction.length - 1 - depth, 0)];
+					return `${fn}(${lhs}, ${rhs})`;
+				}
+			},
+			recursionUnaryOperation: {
+				serialize: (syntax) => {
+					const [lhs] = syntax.groups;
+
+					const depth = recursionTypeToDepth[syntax.source[0].type];
+					if (depth === undefined)
+						throw new Error("Recursion depth not recognized.");
+
+					const fn =
+						currentFunction[Math.max(currentFunction.length - 1 - depth, 0)];
+					return `${fn}(${lhs})`;
 				}
 			},
 			customBinaryOperation: {
