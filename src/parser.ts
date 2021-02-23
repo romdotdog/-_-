@@ -23,10 +23,14 @@ const binaryOperators = {
 
 	sl: "«", // shift left
 	sr: "»", // shift right
-	and: "‡",
-	or: "†",
+	and: "&",
+	or: "|",
 	xor: "^",
-	not: "~"
+	not: "~",
+
+	g: ">",
+	l: "<",
+	e: "="
 };
 
 const unaryOperators = {
@@ -39,7 +43,13 @@ const unaryOperators = {
 	x100: "‰",
 
 	range: "Σ",
-	flatten: "Ξ"
+	flatten: "Ξ",
+
+	sub: "-",
+	add: "+",
+	g: ">",
+	l: "<",
+	sign: "±"
 };
 
 const constants = {
@@ -59,8 +69,8 @@ export const lexer: Lexer = {
 		string: /“(.+?)”/,
 		char: /‘(.)/,
 
-		openingParenthesis: "[",
-		closingParenthesis: "]",
+		openingParenthesis: "(",
+		closingParenthesis: ")",
 
 		...binaryOperators,
 
@@ -70,6 +80,8 @@ export const lexer: Lexer = {
 
 		// Other
 		swap: "¬",
+		if: "—",
+		else: "…",
 
 		// Function declarations
 		...fdecs.reduce((acc, x) => {
@@ -103,7 +115,7 @@ const joinObjectOr = (n: object) => Object.keys(n).join(" | ");
 export const parser: Parser = {
 	root: q`expression`,
 	ast: {
-		expression: q`primaryExpression -> (binaryOperator -> primaryExpression | unaryOperator | recursion | function -> (primaryExpression)?)*`,
+		expression: q`primaryExpression -> (binaryOperator -> primaryExpression | unaryOperator | recursion | function -> (primaryExpression)? | ifExpr)*`,
 		binaryOperator: q`(${joinObjectOr(binaryOperators)}) -> (swap)?`,
 		primaryExpression: q`parenExpr | functionParam | constant | literal`,
 
@@ -115,15 +127,17 @@ export const parser: Parser = {
 			.flat()
 			.join(" | ")}`,
 
-		parenExpr: q`openingParenthesis -> <expression> -> closingParenthesis`,
+		parenExpr: q`openingParenthesis -> expression -> closingParenthesis`,
 		unaryOperator: q`${joinObjectOr(unaryOperators)}`,
 
 		function: q`${fdecs
-			.map((f) => `<decl${f[0]}> -> <expression> -> (decl${f[0]})?`)
+			.map((f) => `<decl${f[0]}> -> expression -> (decl${f[0]})?`)
 			.join(" | ")}`,
 
 		recursion: q`(${fdecs
 			.map((f) => "recurse" + f[0])
-			.join(" | ")}) -> (primaryExpression)?`
+			.join(" | ")}) -> (primaryExpression)?`,
+
+		ifExpr: q`if -> expression -> else -> expression`
 	}
 };

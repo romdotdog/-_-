@@ -23,7 +23,13 @@ export const unaryOperators = [
 	makeUnaryOperator("x10", "n * 10"),
 	makeUnaryOperator("x100", "n * 100"),
 	makeUnaryOperator("range", "Array.from({ length: n }, (x, i) => i)"),
-	makeUnaryOperator("flatten", "n.flat()", true)
+	makeUnaryOperator("flatten", "n.flat()", true),
+
+	makeUnaryOperator("sub", "-n"),
+	makeUnaryOperator("add", "Math.abs(n)"),
+	makeUnaryOperator("g", "n + 1"),
+	makeUnaryOperator("l", "n - 1"),
+	makeUnaryOperator("sign", "Math.sign(n)")
 ] as Function[];
 
 function makeBinaryOperator(name: string, algorithm: string): Function {
@@ -41,5 +47,9 @@ export const binaryOperators = [
 	makeBinaryOperator("bsr", "a >> b"),
 	makeBinaryOperator("band", "a & b"),
 	makeBinaryOperator("bor", "a | b"),
-	makeBinaryOperator("bxor", "a ^ b")
+	makeBinaryOperator("bxor", "a ^ b"),
+
+	makeBinaryOperator("g", "a > b ? 1 : 0"),
+	makeBinaryOperator("l", "a < b ? 1 : 0"),
+	makeBinaryOperator("e", "a === b ? 1 : 0")
 ] as Function[];

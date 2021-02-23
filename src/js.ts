@@ -19,6 +19,8 @@ export default <Block>{
 			expression: {
 				visit: (syntax) => {
 					while (syntax.groups.length != 1) {
+						console.log(syntax.groups);
+
 						const opSyntax = syntax.groups[1];
 						console.log(opSyntax);
 
@@ -113,6 +115,17 @@ export default <Block>{
 									...(rhs ? [rhs] : [])
 								);
 							}
+						} else if (opSyntax?.type === "ifExpr") {
+							let [lhs, _opSyntax] = syntax.groups.splice(0, 2);
+
+							syntax.groups.unshift({
+								type: "generatedIfExpr",
+								groups: [lhs, ...opSyntax.groups],
+								source: []
+							});
+						} else if (opSyntax === null) {
+							let [_opSyntax] = syntax.groups.splice(1, 1);
+							console.warn("Null detected: ", syntax.groups);
 						} else {
 							throw new Error(
 								`Couldn't generate code for operator with type \`${opSyntax?.type}\``
@@ -150,7 +163,7 @@ export default <Block>{
 				serialize: (syntax) => {
 					const [lhs, rhs] = syntax.groups;
 
-					const fn = fdecs.find((f) => f[1][1] === syntax.source[0].type);
+					const fn = fdecs.find((f) => f[1][1] === syntax.source[0].source[0]);
 					if (fn === undefined)
 						throw new Error("Recursion depth not recognized.");
 
@@ -161,7 +174,7 @@ export default <Block>{
 				serialize: (syntax) => {
 					const [lhs] = syntax.groups;
 
-					const fn = fdecs.find((f) => f[1][1] === syntax.source[0].type);
+					const fn = fdecs.find((f) => f[1][1] === syntax.source[0].source[0]);
 					if (fn === undefined)
 						throw new Error("Recursion depth not recognized.");
 
@@ -178,8 +191,8 @@ export default <Block>{
 					const fName = currentFunction.pop();
 
 					const [, fdec] = fdecs.find((f) => f[1][0] == fName)!;
-					const decLhs = fdec[1],
-						decRhs = fdec[2];
+					const decLhs = fdec[2],
+						decRhs = fdec[3];
 
 					return `(function ${fName}(${decLhs}, ${decRhs}) {return ${functionExpr}})(${lhs}, ${rhs})`;
 				}
@@ -194,10 +207,16 @@ export default <Block>{
 					const fName = currentFunction.pop();
 
 					const [, fdec] = fdecs.find((f) => f[1][0] == fName)!;
-					const decLhs = fdec[1],
-						decRhs = fdec[2];
+					const decLhs = fdec[2],
+						decRhs = fdec[3];
 
 					return `(function ${fName}(${decLhs}, ${decRhs}) {return ${functionExpr}})(${lhs})`;
+				}
+			},
+			generatedIfExpr: {
+				serialize: (syntax) => {
+					const [condition, trueSide, falseSide] = syntax.groups;
+					return `${condition} ? ${trueSide} : ${falseSide}`;
 				}
 			}
 		},
