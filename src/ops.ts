@@ -30,7 +30,7 @@ export const unaryOperators = [
 	makeUnaryOperator("g", "n + 1"),
 	makeUnaryOperator("l", "n - 1"),
 	makeUnaryOperator("sign", "Math.sign(n)"),
-	makeUnaryOperator("testExistence", "n !== undefined")
+	makeUnaryOperator("testExistence", "n !== undefined ? 1 : 0")
 ] as Function[];
 
 function makeBinaryOperator(name: string, algorithm: string): Function {
