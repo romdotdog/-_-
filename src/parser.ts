@@ -5,6 +5,7 @@ export const fdecs: [
 	[marker: string, recurse: string, lhs: string, rhs: string]
 ][] = Object.entries({
 	omega: ["Ω", "Ώ", "ω", "ώ"],
+	alpha: ["Α", "Ά", "α", "ά"],
 	upsilon: ["Υ", "Ύ", "υ", "ύ"],
 	iota: ["Ι", "Ί", "ι", "ί"],
 	eta: ["Η", "Ή", "η", "ή"],
@@ -18,6 +19,7 @@ const binaryOperators = {
 
 	mul: "*",
 	div: "/",
+	integerDiv: "\\",
 
 	pow: "•",
 
@@ -45,8 +47,8 @@ const unaryOperators = {
 	pow10n: "°",
 	factorial: "!",
 
-	x10: "%",
-	x100: "‰",
+	x100: "%",
+	x1000: "‰",
 
 	range: "Σ",
 	flatten: "Ξ",
@@ -56,6 +58,7 @@ const unaryOperators = {
 	g: ">",
 	l: "<",
 	not: "~",
+	or: "|",
 	sign: "±",
 	testExistence: "?",
 
@@ -96,6 +99,8 @@ export const lexer: Lexer = {
 		swap: "¬",
 		if: "—",
 		else: "…",
+
+		functionClose: "]",
 
 		// Function declarations
 		...fdecs.reduce((acc, x) => {
@@ -148,12 +153,12 @@ export const parser: Parser = {
 		parenExpr: q`openingParenthesis -> expression -> closingParenthesis`,
 		unaryOperator: q`${joinObjectOr(unaryOperators)}`,
 
-		function: q`${fdecs
-			.map((f) => `decl${f[0]} -> expression -> (decl${f[0]})?`)
-			.join(" | ")}`,
+		function: q`(${fdecs
+			.map((f) => `decl${f[0]}`)
+			.join(" | ")})  -> expression -> (functionClose)?`,
 
 		recursion: q`(${fdecs
-			.map((f) => "recurse" + f[0])
+			.map((f) => `recurse${f[0]}`)
 			.join(" | ")} | mainRecursion) -> (swap)?`,
 
 		ifExpr: q`if -> expression -> else -> expression`

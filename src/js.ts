@@ -180,8 +180,7 @@ export default <Block>{
 					const [lhs] = syntax.groups;
 
 					const [recursionTok] = syntax.source;
-					const _fn =
-						fdecs.find((f) => f[1][1] === recursionTok.source[0]) ?? "main";
+					const _fn = fdecs.find((f) => f[1][1] === recursionTok.source[0]);
 					const fn = _fn?.[1]?.[0] ?? "main";
 
 					return `${fn}(${lhs})`;

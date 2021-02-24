@@ -20,8 +20,8 @@ export const unaryOperators = [
 		"factorial",
 		"Array.from({length: n - 1}, (x, i) => i + 2).reduce((a, m) => a * m, 1)"
 	),
-	makeUnaryOperator("x10", "n * 10"),
 	makeUnaryOperator("x100", "n * 100"),
+	makeUnaryOperator("x1000", "n * 1000"),
 	makeUnaryOperator("range", "Array.from({ length: n }, (x, i) => i)"),
 	makeUnaryOperator("flatten", "n.flat()", true),
 
@@ -31,6 +31,7 @@ export const unaryOperators = [
 	makeUnaryOperator("l", "n - 1"),
 	makeUnaryOperator("sign", "Math.sign(n)"),
 	makeUnaryOperator("not", "-(n - 1)>>>0"), // >>> 0 turns into unsigned integer
+	makeUnaryOperator("or", "Math.floor(n)"),
 	makeUnaryOperator("testExistence", "n !== undefined ? 1 : 0", true),
 
 	makeUnaryOperator("wrap", "[n]", true),
@@ -60,6 +61,7 @@ export const binaryOperators = [
 	makeBinaryOperator("sub", "a - b"),
 	makeBinaryOperator("mul", "a * b"),
 	makeBinaryOperator("div", "a / b"),
+	makeBinaryOperator("integerDiv", "Math.floor(a / b)"),
 	makeBinaryOperator("pow", "Math.pow(a, b)"),
 
 	makeBinaryOperator("sl", "a << b"),
