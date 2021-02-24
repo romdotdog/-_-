@@ -69,12 +69,6 @@ const unaryOperators = {
 	indexFromEnd: "‹"
 };
 
-const constants = {
-	half: "½",
-	pi: "π",
-	tau: "τ"
-};
-
 // ext: .-_-
 // codepage: cp1253 (https://en.wikipedia.org/wiki/Windows-1253)
 export const lexer: Lexer = {
@@ -92,8 +86,6 @@ export const lexer: Lexer = {
 		...binaryOperators,
 
 		...unaryOperators,
-
-		...constants,
 
 		// Other
 		swap: "¬",
@@ -140,9 +132,8 @@ export const parser: Parser = {
 	ast: {
 		expression: q`primaryExpression -> (binaryOperator -> primaryExpression | unaryOperator | recursion -> (primaryExpression)? | function -> (primaryExpression)? | ifExpr)*`,
 		binaryOperator: q`(${joinObjectOr(binaryOperators)}) -> (swap)?`,
-		primaryExpression: q`parenExpr | functionParam | constant | literal`,
+		primaryExpression: q`parenExpr | functionParam | literal`,
 
-		constant: q`${joinObjectOr(constants)}`,
 		literal: q`number | string | char`,
 
 		functionParam: q`${fdecs
