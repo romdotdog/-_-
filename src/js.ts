@@ -8,8 +8,6 @@ const constants = {
 	tau: "Math.pi*2"
 };
 
-let currentFunction = ["main"]; // Scope order
-
 let opFuncs: Record<string, Function> = {};
 export default <Block>{
 	lex: lexer,
@@ -19,19 +17,18 @@ export default <Block>{
 			expression: {
 				visit: (syntax) => {
 					while (syntax.groups.length != 1) {
-						console.log(syntax.groups);
-
 						const opSyntax = syntax.groups[1];
-						console.log(opSyntax);
 
 						// TODO: switch statement
 						if (opSyntax?.type === "binaryOperator") {
 							const opTok = opSyntax.source[0];
-							const op = binaryOperators.find((f) => f.name == opTok.type);
+							const op = binaryOperators.find(
+								(f) => f.name == "b_" + opTok.type
+							);
 							if (!op)
 								throw new Error(`Operator ${opTok.type} not implemented.`);
 
-							opFuncs[opTok.type] = op;
+							opFuncs[op.name] = op;
 
 							let [lhs, _opSyntax, rhs] = syntax.groups.splice(0, 3);
 							if (opSyntax.source?.[1]?.type === "swap") {
@@ -51,11 +48,13 @@ export default <Block>{
 							});
 						} else if (opSyntax?.type === "unaryOperator") {
 							const opTok = opSyntax.source[0];
-							const op = unaryOperators.find((f) => f.name == opTok.type);
+							const op = unaryOperators.find(
+								(f) => f.name == "u_" + opTok.type
+							);
 							if (!op)
 								throw new Error(`Operator ${opTok.type} not implemented.`);
 
-							opFuncs[opTok.type] = op;
+							opFuncs[op.name] = op;
 
 							let [lhs, _opSyntax] = syntax.groups.splice(0, 2);
 
@@ -72,22 +71,23 @@ export default <Block>{
 							});
 						} else if (opSyntax?.type === "function") {
 							let [lhs, _opSyntax, rhs] = syntax.groups.splice(0, 3);
-							const [fName, functionExpr] = opSyntax.groups;
+							const [functionExpr] = opSyntax.groups;
+							const fName = opSyntax.source[0];
 
 							if (rhs?.type === "primaryExpression") {
 								// Binary
 								syntax.groups.unshift({
 									type: "customBinaryOperation",
-									groups: [fName, functionExpr, lhs, rhs],
-									source: []
+									groups: [functionExpr, lhs, rhs],
+									source: [fName]
 								});
 							} else {
 								// Unary
 								syntax.groups.unshift(
 									{
 										type: "customUnaryOperation",
-										groups: [fName, functionExpr, lhs],
-										source: []
+										groups: [functionExpr, lhs],
+										source: [fName]
 									},
 									...(rhs ? [rhs] : [])
 								);
@@ -96,7 +96,6 @@ export default <Block>{
 							let [lhs, _opSyntax, rhs] = syntax.groups.splice(0, 3);
 							const [recursionTok] = opSyntax.source;
 
-							console.log([opSyntax, opSyntax.groups, opSyntax.source]);
 							if (rhs?.type === "primaryExpression") {
 								// Binary
 								syntax.groups.unshift({
@@ -124,8 +123,9 @@ export default <Block>{
 								source: []
 							});
 						} else if (opSyntax === null) {
-							let [_opSyntax] = syntax.groups.splice(1, 1);
+							// TODO: Fix
 							console.warn("Null detected: ", syntax.groups);
+							let [_opSyntax] = syntax.groups.splice(1, 1);
 						} else {
 							throw new Error(
 								`Couldn't generate code for operator with type \`${opSyntax?.type}\``
@@ -141,7 +141,7 @@ export default <Block>{
 							.map((f) => f.toString())
 							.join("\n\n") + "\n\n",
 
-						`console.log((function ${currentFunction.pop()}() { return `,
+						`console.log((function main() { return `,
 						...syntax.groups,
 						"})())"
 					];
@@ -150,20 +150,23 @@ export default <Block>{
 			binaryOperation: {
 				serialize: (syntax) => {
 					const [lhs, rhs] = syntax.groups;
-					return `${syntax.source[0].source[0]}(${lhs}, ${rhs})`;
+					const [fName] = syntax.source;
+					return `${fName.source[0]}(${lhs}, ${rhs})`;
 				}
 			},
 			unaryOperation: {
 				serialize: (syntax) => {
 					const [lhs] = syntax.groups;
-					return `${syntax.source[0].source[0]}(${lhs})`;
+					const [fName] = syntax.source;
+					return `${fName.source[0]}(${lhs})`;
 				}
 			},
 			recursionBinaryOperation: {
 				serialize: (syntax) => {
 					const [lhs, rhs] = syntax.groups;
 
-					const fn = fdecs.find((f) => f[1][1] === syntax.source[0].source[0]);
+					const [recursionTok] = syntax.source;
+					const fn = fdecs.find((f) => f[1][1] === recursionTok.source[0]);
 					if (fn === undefined)
 						throw new Error("Recursion depth not recognized.");
 
@@ -174,7 +177,8 @@ export default <Block>{
 				serialize: (syntax) => {
 					const [lhs] = syntax.groups;
 
-					const fn = fdecs.find((f) => f[1][1] === syntax.source[0].source[0]);
+					const [recursionTok] = syntax.source;
+					const fn = fdecs.find((f) => f[1][1] === recursionTok.source[0]);
 					if (fn === undefined)
 						throw new Error("Recursion depth not recognized.");
 
@@ -182,13 +186,9 @@ export default <Block>{
 				}
 			},
 			customBinaryOperation: {
-				visit: (syntax) => {
-					const [fName] = syntax.groups;
-					currentFunction.push(fName.source[0].source[0]);
-				},
 				serialize: (syntax) => {
-					const [, functionExpr, lhs, rhs] = syntax.groups;
-					const fName = currentFunction.pop();
+					const [functionExpr, lhs, rhs] = syntax.groups;
+					const fName = syntax.source[0].source[0];
 
 					const [, fdec] = fdecs.find((f) => f[1][0] == fName)!;
 					const decLhs = fdec[2],
@@ -198,14 +198,12 @@ export default <Block>{
 				}
 			},
 			customUnaryOperation: {
-				visit: (syntax) => {
-					const [fName] = syntax.groups;
-					currentFunction.push(fName.source[0].source[0]);
-				},
+				visit: (syntax) => {},
 				serialize: (syntax) => {
-					const [, functionExpr, lhs] = syntax.groups;
-					const fName = currentFunction.pop();
+					const [functionExpr, lhs] = syntax.groups;
+					const fName = syntax.source[0].source[0];
 
+					console.log(fName);
 					const [, fdec] = fdecs.find((f) => f[1][0] == fName)!;
 					const decLhs = fdec[2],
 						decRhs = fdec[3];

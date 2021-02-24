@@ -4,11 +4,11 @@ function makeUnaryOperator(
 	raw = false
 ): Function {
 	return eval(
-		`function ${name}(n){${
-			!raw
-				? `return Array.isArray(n) ? n.map(${name}) : ${algorithm}`
-				: `return ${algorithm}`
-		}};${name}`
+		`function u_${name}(n){${
+			raw
+				? `return ${algorithm}`
+				: `return Array.isArray(n) ? n.map(${name}) : ${algorithm}`
+		}};u_${name}`
 	);
 }
 
@@ -30,12 +30,29 @@ export const unaryOperators = [
 	makeUnaryOperator("g", "n + 1"),
 	makeUnaryOperator("l", "n - 1"),
 	makeUnaryOperator("sign", "Math.sign(n)"),
-	makeUnaryOperator("testExistence", "n !== undefined ? 1 : 0")
+	makeUnaryOperator("not", "-(n - 1)>>>0"), // >>> 0 turns into unsigned integer
+	makeUnaryOperator("testExistence", "n !== undefined ? 1 : 0", true),
+
+	makeUnaryOperator("wrap", "[n]", true),
+	makeUnaryOperator("wrapWith", "[[n]]", true),
+	makeUnaryOperator("indexFromStart", "n[0]", true),
+	makeUnaryOperator("indexFromEnd", "n[n.length - 1]", true),
+	makeUnaryOperator("mul", "n.length", true)
 ] as Function[];
 
-function makeBinaryOperator(name: string, algorithm: string): Function {
-	// TODO: Binary operator behavior
-	return eval(`function ${name}(a, b){${`return ${algorithm}`}};${name}`);
+function makeBinaryOperator(
+	name: string,
+	algorithm: string,
+	raw = false
+): Function {
+	return eval(
+		`function b_${name}(a, b){
+            ${
+							raw
+								? `return ${algorithm}`
+								: `return Array.isArray(a) ? a.map((e, i) => b_${name}(e, Array.isArray(b) ? b[i % b.length] : b)) : Array.isArray(b) ? console.error("b cannot be an array when a is a scalar. Please swap the operator binary ${name}.") : ${algorithm}`
+						}};b_${name}`
+	);
 }
 
 export const binaryOperators = [
@@ -44,13 +61,19 @@ export const binaryOperators = [
 	makeBinaryOperator("mul", "a * b"),
 	makeBinaryOperator("div", "a / b"),
 	makeBinaryOperator("pow", "Math.pow(a, b)"),
-	makeBinaryOperator("bsl", "a << b"),
-	makeBinaryOperator("bsr", "a >> b"),
-	makeBinaryOperator("band", "a & b"),
-	makeBinaryOperator("bor", "a | b"),
-	makeBinaryOperator("bxor", "a ^ b"),
+
+	makeBinaryOperator("sl", "a << b"),
+	makeBinaryOperator("sr", "a >> b"),
+	makeBinaryOperator("and", "a & b"),
+	makeBinaryOperator("or", "a | b"),
+	makeBinaryOperator("xor", "a ^ b"),
 
 	makeBinaryOperator("g", "a > b ? 1 : 0"),
 	makeBinaryOperator("l", "a < b ? 1 : 0"),
-	makeBinaryOperator("e", "a === b ? 1 : 0")
+	makeBinaryOperator("e", "a === b ? 1 : 0"),
+
+	makeBinaryOperator("concat", "Array.isArray(b) ? [a, ...b] : [a, b]", true),
+	makeBinaryOperator("wrapWith", "[a, b]", true),
+	makeBinaryOperator("indexFromStart", "a[b]", true),
+	makeBinaryOperator("indexFromEnd", "a[a.length - 1 - b]", true)
 ] as Function[];

@@ -26,11 +26,17 @@ const binaryOperators = {
 	and: "&",
 	or: "|",
 	xor: "^",
-	not: "~",
 
 	g: ">",
 	l: "<",
-	e: "="
+	e: "=",
+
+	// Array operators
+	concat: "‚",
+	wrapWith: "„",
+
+	indexFromStart: "›",
+	indexFromEnd: "‹"
 };
 
 const unaryOperators = {
@@ -49,8 +55,15 @@ const unaryOperators = {
 	add: "+",
 	g: ">",
 	l: "<",
+	not: "~",
 	sign: "±",
-	testExistence: "?"
+	testExistence: "?",
+
+	wrap: "‚",
+	wrapWith: "„", // just wrap operator but twice
+
+	indexFromStart: "›",
+	indexFromEnd: "‹"
 };
 
 const constants = {
@@ -70,8 +83,8 @@ export const lexer: Lexer = {
 		string: /“(.+?)”/,
 		char: /‘(.)/,
 
-		openingParenthesis: "(",
-		closingParenthesis: ")",
+		openingParenthesis: "{",
+		closingParenthesis: "}",
 
 		...binaryOperators,
 
@@ -116,7 +129,7 @@ const joinObjectOr = (n: object) => Object.keys(n).join(" | ");
 export const parser: Parser = {
 	root: q`expression`,
 	ast: {
-		expression: q`primaryExpression -> (binaryOperator -> primaryExpression | unaryOperator | recursion | function -> (primaryExpression)? | ifExpr)*`,
+		expression: q`primaryExpression -> (binaryOperator -> primaryExpression | unaryOperator | recursion -> (primaryExpression)? | function -> (primaryExpression)? | ifExpr)*`,
 		binaryOperator: q`(${joinObjectOr(binaryOperators)}) -> (swap)?`,
 		primaryExpression: q`parenExpr | functionParam | constant | literal`,
 
@@ -132,12 +145,12 @@ export const parser: Parser = {
 		unaryOperator: q`${joinObjectOr(unaryOperators)}`,
 
 		function: q`${fdecs
-			.map((f) => `<decl${f[0]}> -> expression -> (decl${f[0]})?`)
+			.map((f) => `decl${f[0]} -> expression -> (decl${f[0]})?`)
 			.join(" | ")}`,
 
 		recursion: q`(${fdecs
 			.map((f) => "recurse" + f[0])
-			.join(" | ")}) -> (primaryExpression)?`,
+			.join(" | ")}) -> (swap)?`,
 
 		ifExpr: q`if -> expression -> else -> expression`
 	}
