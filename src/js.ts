@@ -94,9 +94,12 @@ export default <Block>{
 							}
 						} else if (opSyntax?.type === "recursion") {
 							let [lhs, _opSyntax, rhs] = syntax.groups.splice(0, 3);
-							const [recursionTok] = opSyntax.source;
+							const [recursionTok, swap] = opSyntax.source;
 
 							if (rhs?.type === "primaryExpression") {
+								if (swap) {
+									[lhs, rhs] = [rhs, lhs];
+								}
 								// Binary
 								syntax.groups.unshift({
 									type: "recursionBinaryOperation",
