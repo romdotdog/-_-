@@ -109,6 +109,10 @@ export const lexer: Lexer = {
 			return acc;
 		}, {} as Record<string, string>),
 
+		mainRecursion: "ς",
+		mainOp1: "ζ",
+		mainOp2: "ξ",
+
 		// Lhs
 		...fdecs.reduce((acc, x) => {
 			acc["lhs" + x[0]] = x[1][2];
@@ -139,7 +143,7 @@ export const parser: Parser = {
 		functionParam: q`${fdecs
 			.map((f) => ["lhs" + f[0], "rhs" + f[0]])
 			.flat()
-			.join(" | ")}`,
+			.join(" | ")} | mainOp1 | mainOp2`,
 
 		parenExpr: q`openingParenthesis -> expression -> closingParenthesis`,
 		unaryOperator: q`${joinObjectOr(unaryOperators)}`,
@@ -150,7 +154,7 @@ export const parser: Parser = {
 
 		recursion: q`(${fdecs
 			.map((f) => "recurse" + f[0])
-			.join(" | ")}) -> (swap)?`,
+			.join(" | ")} | mainRecursion) -> (swap)?`,
 
 		ifExpr: q`if -> expression -> else -> expression`
 	}

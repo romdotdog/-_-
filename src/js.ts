@@ -144,7 +144,7 @@ export default <Block>{
 							.map((f) => f.toString())
 							.join("\n\n") + "\n\n",
 
-						`console.log((function main() { return `,
+						`console.log((function main(ζ, ξ) { return `,
 						...syntax.groups,
 						"})())"
 					];
@@ -169,11 +169,10 @@ export default <Block>{
 					const [lhs, rhs] = syntax.groups;
 
 					const [recursionTok] = syntax.source;
-					const fn = fdecs.find((f) => f[1][1] === recursionTok.source[0]);
-					if (fn === undefined)
-						throw new Error("Recursion depth not recognized.");
+					const _fn = fdecs.find((f) => f[1][1] === recursionTok.source[0]);
+					const fn = _fn?.[1]?.[0] ?? "main";
 
-					return `${fn[1][0]}(${lhs}, ${rhs})`;
+					return `${fn}(${lhs}, ${rhs})`;
 				}
 			},
 			recursionUnaryOperation: {
@@ -181,11 +180,11 @@ export default <Block>{
 					const [lhs] = syntax.groups;
 
 					const [recursionTok] = syntax.source;
-					const fn = fdecs.find((f) => f[1][1] === recursionTok.source[0]);
-					if (fn === undefined)
-						throw new Error("Recursion depth not recognized.");
+					const _fn =
+						fdecs.find((f) => f[1][1] === recursionTok.source[0]) ?? "main";
+					const fn = _fn?.[1]?.[0] ?? "main";
 
-					return `${fn[1][0]}(${lhs})`;
+					return `${fn}(${lhs})`;
 				}
 			},
 			customBinaryOperation: {
